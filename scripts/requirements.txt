@@ -1,0 +1,5 @@
+# Dependências diretas fixadas por versão. As transitivas do jsonschema ficam
+# soltas na F0; fixá-las com hash (pip --require-hashes) entra na F1, junto com
+# as ferramentas de captura.
+jsonschema==4.26.0
+PyYAML==6.0.4

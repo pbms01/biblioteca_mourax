@@ -1,0 +1,64 @@
+# Captura de fontes aprovadas (chave 2). Esqueleto da F0; a captura entra na F1.
+#
+# Disparo: push de branch pedido/<AAAAMMDDTHHMMSSZ> que acrescenta um único
+# arquivo pedidos/<AAAAMMDDTHHMMSSZ>.json, gravado depois da aprovação do
+# titular na conversa (chave 1).
+#
+# Decisões não óbvias:
+# - O job usa o environment "captura", com o titular como revisor obrigatório e
+#   política de branch restrita a pedido/*. O job não começa nem lê os segredos
+#   do environment antes da aprovação.
+# - Num evento push, o GitHub executa a versão deste arquivo que está na
+#   própria branch enviada, e não a do main. Por isso, ao aprovar, o titular
+#   confere que o push só acrescentou o pedido; e o validar.yml reprova PR de
+#   pedido que mexa fora de pedidos/ e fontes/. Para a F1 fica em estudo o
+#   pull_request_target, que executa a versão do main.
+# - Commit e PR feitos aqui com GITHUB_TOKEN não disparam workflows novos, salvo
+#   pull_request opened, synchronize e reopened, que ficam aguardando aprovação
+#   manual na PR.
+# - Permissões mínimas na F0. A F1 acrescenta contents: write (commit da
+#   captura), pull-requests: write (PR para o main), id-token: write e
+#   attestations: write (actions/attest, v4.2.2 no SHA
+#   1e69f48acb82d1966a394da916b4c1698aa569d6).
+
+name: captura
+
+on:
+  push:
+    branches:
+      - 'pedido/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: captura-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  captura:
+    name: captura
+    runs-on: ubuntu-latest
+    environment: captura
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+
+      - name: Dependências
+        run: python -m pip install -r scripts/requirements.txt
+
+      - name: Validar o pedido
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: python scripts/validar.py --somente-pedido "pedidos/${BRANCH#pedido/}.json"
+
+      - name: Capturar
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: python scripts/capturar.py --pedido "pedidos/${BRANCH#pedido/}.json"

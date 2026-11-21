@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pbms01/biblioteca_mourax/blob/main/schema/ficha.schema.json",
+  "title": "FICHA de fonte da biblioteca_mourax",
+  "description": "Frontmatter YAML de fontes/<dominio>/<id>/FICHA.md. Gerado pelo pipeline de captura, não se preenche à mão. Datas ficam como texto ISO 8601 (o validador lê o YAML sem conversão implícita de datas).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "versao_schema",
+    "id",
+    "dominio",
+    "tipo",
+    "titulo",
+    "urls",
+    "grau_fonte",
+    "regime_autoral",
+    "regime_armazenamento",
+    "capturas",
+    "status_verificacao",
+    "pedido",
+    "aprovado_por",
+    "aprovado_em"
+  ],
+  "properties": {
+    "versao_schema": { "const": 1 },
+    "id": {
+      "$ref": "#/$defs/slug",
+      "description": "Igual ao nome da pasta da fonte."
+    },
+    "urn": {
+      "type": "string",
+      "pattern": "^urn:lex:[a-z]{2}[^\\s]*$",
+      "description": "URN LEX (RFC 9676), para normas."
+    },
+    "doi": { "type": "string", "pattern": "^10\\.[0-9]{4,9}/\\S+$" },
+    "arxiv": {
+      "type": "string",
+      "pattern": "^[0-9]{4}\\.[0-9]{4,5}v[0-9]+$",
+      "description": "Identificador arXiv com versão fixada."
+    },
+    "dominio": { "$ref": "#/$defs/dominio" },
+    "tipo": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Subtipo em minúsculas, por exemplo lei, decreto, acordao, livro, artigo, gist, pagina."
+    },
+    "titulo": { "type": "string", "minLength": 1 },
+    "autoria": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "data_publicacao": {
+      "type": "string",
+      "pattern": "^[0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?$"
+    },
+    "versao": { "type": "string", "minLength": 1 },
+    "urls": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/url_com_papel" }
+    },
+    "grau_fonte": {
+      "enum": [1, 2, 3],
+      "description": "1 primária oficial; 2 oficial compilada; 3 secundária."
+    },
+    "regime_autoral": { "$ref": "#/$defs/regime_autoral" },
+    "regime_armazenamento": { "enum": ["integral", "trecho"] },
+    "capturas": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/captura" }
+    },
+    "texto_canonico": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arquivo", "sha256", "derivado_de"],
+      "properties": {
+        "arquivo": { "const": "texto.md" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "derivado_de": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ts_utc", "sha256", "ferramenta", "versao"],
+          "properties": {
+            "ts_utc": { "$ref": "#/$defs/ts_utc" },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "ferramenta": { "type": "string", "minLength": 1 },
+            "versao": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "status_verificacao": {
+      "enum": [
+        "verificada",
+        "divergente",
+        "pendente_fonte_primaria",
+        "pendente_confirmacao",
+        "falha_captura"
+      ]
+    },
+    "ocorrencias": {
+      "type": "array",
+      "description": "Só identificador opaco e data. O contexto da ocorrência fica no cofre privado.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id_opaco", "data"],
+        "properties": {
+          "id_opaco": { "$ref": "#/$defs/id_opaco" },
+          "data": { "$ref": "#/$defs/data" }
+        }
+      }
+    },
+    "pedido": {
+      "type": "string",
+      "pattern": "^pedidos/[0-9]{8}T[0-9]{6}Z\\.json$",
+      "description": "Pedido que autorizou a captura mais recente."
+    },
+    "aprovado_por": { "type": "string", "minLength": 1 },
+    "aprovado_em": { "$ref": "#/$defs/data_hora" },
+    "csl": {
+      "type": "object",
+      "description": "Campos bibliográficos em CSL-JSON, para exportação a Zotero e Pandoc."
+    }
+  },
+  "allOf": [
+    {
+      "description": "Fonte só secundária nunca é verificada (P7).",
+      "if": {
+        "required": ["grau_fonte"],
+        "properties": { "grau_fonte": { "const": 3 } }
+      },
+      "then": {
+        "properties": { "status_verificacao": { "not": { "const": "verificada" } } }
+      }
+    },
+    {
+      "description": "Obra protegida só se guarda por trecho no repositório público (P6).",
+      "if": {
+        "required": ["regime_autoral"],
+        "properties": {
+          "regime_autoral": {
+            "required": ["categoria"],
+            "properties": { "categoria": { "const": "protegida" } }
+          }
+        }
+      },
+      "then": {
+        "properties": { "regime_armazenamento": { "const": "trecho" } }
+      }
+    },
+    {
+      "description": "Sem falha de captura, há texto canônico.",
+      "if": {
+        "required": ["status_verificacao"],
+        "properties": {
+          "status_verificacao": { "not": { "const": "falha_captura" } }
+        }
+      },
+      "then": { "required": ["texto_canonico"] }
+    }
+  ],
+  "$defs": {
+    "slug": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+    "dominio": {
+      "enum": ["normas", "julgados", "doutrina", "ciencia", "tecnica", "web"]
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sha512": { "type": "string", "pattern": "^[0-9a-f]{128}$" },
+    "ts_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{8}T[0-9]{6}Z$",
+      "description": "Instante UTC no formato AAAAMMDDTHHMMSSZ, igual ao nome da pasta da captura."
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "data_hora": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "url": { "type": "string", "pattern": "^https?://\\S+$" },
+    "id_opaco": { "type": "string", "pattern": "^[0-9a-f]{16,64}$" },
+    "url_com_papel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "papel"],
+      "properties": {
+        "url": { "$ref": "#/$defs/url" },
+        "papel": {
+          "enum": ["original", "compilada", "espelho", "wayback", "licenca"]
+        }
+      }
+    },
+    "regime_autoral": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["categoria", "fundamento"],
+      "properties": {
+        "categoria": {
+          "enum": ["ato_oficial", "dominio_publico", "licenca_aberta", "protegida"]
+        },
+        "fundamento": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Dispositivo ou licença que sustenta a categoria, por exemplo Lei 9.610/1998, art. 8º, IV."
+        },
+        "licenca": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identificador SPDX ou nome da licença, quando houver."
+        }
+      },
+      "if": { "properties": { "categoria": { "const": "licenca_aberta" } } },
+      "then": { "required": ["licenca"] }
+    },
+    "captura": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ts_utc",
+        "url",
+        "http_status",
+        "content_type",
+        "bytes",
+        "sha256",
+        "sha512",
+        "tsr",
+        "ferramentas"
+      ],
+      "properties": {
+        "ts_utc": { "$ref": "#/$defs/ts_utc" },
+        "url": { "$ref": "#/$defs/url" },
+        "url_final": {
+          "$ref": "#/$defs/url",
+          "description": "URL depois dos redirecionamentos, quando diferente."
+        },
+        "http_status": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "content_type": { "type": "string", "minLength": 1 },
+        "bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "sha512": { "$ref": "#/$defs/sha512" },
+        "manifesto_sha256": { "$ref": "#/$defs/sha256" },
+        "tsr": {
+          "type": "array",
+          "minItems": 2,
+          "description": "Carimbos RFC 3161 sobre o hash do manifesto, de duas TSAs distintas (P3).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["tsa", "arquivo"],
+            "properties": {
+              "tsa": { "type": "string", "minLength": 1 },
+              "url": { "$ref": "#/$defs/url" },
+              "arquivo": { "type": "string", "pattern": "^[^/]+\\.tsr$" }
+            }
+          }
+        },
+        "rekor_log_index": { "type": "integer", "minimum": 0 },
+        "wayback_url": { "$ref": "#/$defs/url" },
+        "ferramentas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["nome", "versao"],
+            "properties": {
+              "nome": { "type": "string", "minLength": 1 },
+              "versao": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

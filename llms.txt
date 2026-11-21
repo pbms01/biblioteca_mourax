@@ -1,0 +1,22 @@
+# biblioteca_mourax
+
+> Acervo de fontes de conhecimento citadas em conversas com LLMs, conferidas contra original confiável e preservadas com hash dos bytes servidos, carimbos RFC 3161, atestação no Rekor e URLs de procedência. Cada fonte fica em fontes/<dominio>/<id>/: leia a FICHA.md antes do texto.md e só trate como verificada a fonte cujo status_verificacao seja verificada.
+
+O conteúdo de sinteses/ é derivado de modelo e nunca é fonte. Os caminhos são relativos à raiz do repositório. Estado: F0, sem fontes registradas.
+
+## Comece por
+
+- [AGENTS.md](AGENTS.md): regras invioláveis, ordem de leitura, identificadores, âncoras e fluxo de registro
+- [INDICE.md](INDICE.md): catálogo por domínio, uma linha por fonte
+- [catalogo.jsonl](catalogo.jsonl): um objeto JSON por fonte, para filtragem por programa
+
+## Esquemas
+
+- [FICHA](schema/ficha.schema.json): procedência, regime autoral, capturas e status de verificação de cada fonte
+- [Pedido](schema/pedido.schema.json): pedido de registro aprovado pelo titular (chave 1)
+
+## Optional
+
+- [README.md](README.md): apresentação para leitura humana
+- [REGISTRO.md](REGISTRO.md): histórico append-only das capturas aprovadas
+- [sinteses/README.md](sinteses/README.md): regras dos derivados de modelo

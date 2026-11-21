@@ -1,0 +1,7 @@
+# Segunda barreira, não a primeira: a área privada (exportação de dados,
+# candidatos, amostra rotulada, relatório de auditoria) vive fora do clone.
+_acervo_privado/
+
+__pycache__/
+*.pyc
+.venv/

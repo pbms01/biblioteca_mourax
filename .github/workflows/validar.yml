@@ -1,0 +1,49 @@
+# Validação determinística: check obrigatório do main.
+#
+# Decisões não óbvias:
+# - O nome do job, "validar", é o contexto exigido pelo ruleset do main.
+#   Renomear o job exige atualizar o ruleset, sob pena de travar todo merge.
+# - fetch-depth 0: a imutabilidade de capturas/ e pedidos/ e o append-only do
+#   REGISTRO.md comparam o estado atual com o commit de base.
+# - PR aberta ou atualizada pelo captura.yml com GITHUB_TOKEN dispara este
+#   workflow em estado de espera de aprovação; o titular libera a execução na
+#   própria PR.
+# - Actions fixadas por SHA completo do commit, com a versão em comentário,
+#   para que uma tag movida não altere o que roda num repositório probatório.
+
+name: validar
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    name: validar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+
+      - name: Dependências
+        run: python -m pip install -r scripts/requirements.txt
+
+      - name: Validar
+        env:
+          # Na PR, o script troca esta base pelo primeiro pai do commit de
+          # merge de teste. No push, usa o estado anterior do main.
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: python scripts/validar.py --base "$BASE_SHA" --head-ref "$HEAD_REF"

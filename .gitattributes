@@ -1,0 +1,8 @@
+# Fim de linha LF em todo texto, também em clones no Windows, para que o hash
+# de texto.md, FICHA.md e dos pedidos seja o mesmo em qualquer máquina.
+* text=auto eol=lf
+
+# Capturas são bytes de terceiros. O git não pode converter fim de linha nem
+# aplicar filtro algum a elas, sob pena de alterar o que foi hasheado e
+# carimbado; por isso são tratadas como binárias em checkout, diff e merge.
+fontes/**/capturas/** -text -diff -merge
