@@ -23,10 +23,16 @@
 
 name: captura
 
+# CAPTURA INATIVA. Enquanto capturar.py não estiver implementado, o push de
+# pedido/** não dispara este workflow: o pedido entra no main por PR e aguarda
+# a captura em lote (AGENTS.md, Fase atual). O interruptor é este bloco, e não
+# uma variável de repositório, para que ligar e desligar a captura fique no
+# histórico do git. Para ativar na F1, trocar por:
+#   push:
+#     branches:
+#       - 'pedido/**'
 on:
-  push:
-    branches:
-      - 'pedido/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
