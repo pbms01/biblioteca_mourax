@@ -20,6 +20,8 @@ O registro depende de duas aprovações do titular, dadas em canais distintos.
 
 A captura é feita pelo runner do GitHub Actions, nunca pelo modelo. O runner baixa os bytes, calcula SHA-256 e SHA-512, preserva o contexto HTTP em WARC, obtém carimbos RFC 3161 de duas autoridades, grava atestação Sigstore no log público Rekor, aciona o arquivamento independente pelo Wayback Machine e confere os trechos literais. O resultado chega como pull request e só entra no `main` depois de passar no `validar.yml`.
 
+Enquanto a captura estiver inativa (AGENTS.md, seção Fase atual), o pedido aprovado entra no `main` por pull request e aguarda a captura em lote.
+
 ## O que não entra
 
 Material de caso: peças e documentos de autos, números de processos concretos em análise, nomes de partes e dados pessoais. A regra vale também para o cofre privado. Precedente publicado, invocado como autoridade, é fonte e pode entrar.

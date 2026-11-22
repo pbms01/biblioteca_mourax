@@ -76,9 +76,9 @@ Divergência é resultado, não erro, e é sempre relatada ao titular.
 
 ## Fluxo de registro
 
-1. Detecção e resolução pelo agente (skill `proveniencia-fontes`, modos `/fontes` e `/fontes acervo`).
+1. Detecção e resolução pelo agente (skill `proveniencia-fontes`, comandos `/fontes`, `/fontes projeto` e `/fontes acervo`). Obra que já esteja em pedido anterior ou no catálogo não gera pedido novo.
 2. Chave 1: proposta item por item e aprovação expressa na conversa.
-3. Pedido: o agente grava `pedidos/<AAAAMMDDTHHMMSSZ>.json`, conforme `schema/pedido.schema.json`, numa branch `pedido/<AAAAMMDDTHHMMSSZ>`, e faz o push. A branch só acrescenta esse arquivo.
+3. Pedido: o agente grava `pedidos/<AAAAMMDDTHHMMSSZ>.json`, conforme `schema/pedido.schema.json`, numa branch `pedido/<AAAAMMDDTHHMMSSZ>`, e faz o push. A branch só acrescenta esse arquivo. Com a captura inativa (seção Fase atual), o fluxo para aqui de outro modo: o agente abre PR da branch para o `main` e, com o check `validar` verde, avisa o titular, que faz o merge; o pedido fica no `main` à espera da captura em lote. O agente nunca faz merge no `main`.
 4. Chave 2: o `captura.yml` aguarda a aprovação do titular no environment `captura`. Num push, o GitHub executa a versão do workflow que está na própria branch; por isso, ao aprovar, o titular confere que o push só acrescentou o pedido.
 5. Captura pelo runner, commit na mesma branch e pull request para o `main`.
 6. `validar.yml`: esquemas, coerência de caminhos, imutabilidade, limites da branch de pedido, índice em sincronia, material de caso e estilo.
@@ -94,4 +94,9 @@ Uma linha por captura aprovada, sempre acrescentada no fim, neste formato:
 
 ## Fase atual
 
-F0. `validar.py` e `indexar.py` funcionam; `capturar.py`, `extrair.py`, `conferir.py`, `detectar.py` e `fixidez.py` são esqueletos que descrevem o contrato e terminam com erro.
+F0, com registro de pedidos.
+
+- Registro de pedidos: ativo.
+- Captura: inativa.
+
+`validar.py` e `indexar.py` funcionam; `capturar.py`, `extrair.py`, `conferir.py`, `detectar.py` e `fixidez.py` são esqueletos que descrevem o contrato e terminam com erro. O `captura.yml` só tem disparo manual até a F1; os pedidos acumulados no `main` serão capturados em lote quando ela entrar. As duas linhas acima são lidas pela skill `proveniencia-fontes` para decidir o envio; ao mudar a fase, mantenha o formato.
